@@ -36,7 +36,7 @@ UI/UX Design
 
 
 Download or clone the repository:
-git clone https://github.com/yourusername/ai-travel-planner.git
+git clone https://github.com/deepakjain24-create/TravelGenie-AI.git
 Open the project folder.
 Open the file:
 index.html
