@@ -1,1 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Travel Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  :root {
+    --bg: #0d1117;
+    --surface: #161b27;
+    --surface2: #1e2535;
+    --border: #2a3347;
+    --border-hover: #3d4f6e;
+    --accent: #4f8ef7;
+    --accent2: #7b5ea7;
+    --text: #e4eaf7;
+    --text-muted: #7a8aaa;
+    --text-label: #9aaac8;
+    --tag-bg: #1e2535;
+    --tag-active: #4f8ef7;
+    --input-bg: #161b27;
+    --radius: 10px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.45);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    padding: 0;
+    background-image:
+      radial-gradient(ellipse at 10% 0%, rgba(79,142,247,0.07) 0%, transparent 50%),
+      radial-gradient(ellipse at 90% 10%, rgba(123,94,167,0.06) 0%, transparent 50%);
+  }
+
+
+  header {
+    padding: 28px 0 0;
+    text-align: center;
+    position: relative;
+  }
+  header .logo {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.9rem; font-weight: 600; letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  header .logo span { color: var(--accent); }
+  header p.tagline {
+    color: var(--text-muted); font-size: .88rem; margin-top: 5px;
+    letter-spacing: .5px;
+  }
+
+
+  .container { max-width: 900px; margin: 0 auto; padding: 28px 20px 80px; }
+
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 36px;
+    box-shadow: var(--shadow);
+    transition: border-color .2s;
+  }
+
+
+  .section-label {
+    font-size: .72rem; font-weight: 600;
+    letter-spacing: .14em; color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+
+
+  .field { display: flex; flex-direction: column; gap: 8px; }
+  .field label {
+    font-size: .7rem; font-weight: 600; letter-spacing: .12em;
+    color: var(--text-label); text-transform: uppercase;
+  }
+  .field input,
+  .field select,
+  .field textarea {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: .95rem;
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+    appearance: none; -webkit-appearance: none;
+    width: 100%;
+  }
+  .field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%237a8aaa'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 12px;
+    padding-right: 36px;
+    cursor: pointer;
+  }
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79,142,247,0.12);
+  }
+  .field input::placeholder,
+  .field textarea::placeholder { color: var(--text-muted); }
+  .field textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+
+
+  .interests-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+  .interest-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--tag-bg);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 8px 16px;
+    font-size: .85rem; font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all .2s;
+    user-select: none;
+  }
+  .interest-tag:hover { border-color: var(--border-hover); color: var(--text); }
+  .interest-tag.active {
+    background: rgba(79,142,247,0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  
+  .btn-generate {
+    width: 100%; margin-top: 24px;
+    padding: 15px 32px;
+    background: linear-gradient(135deg, var(--accent) 0%, #3a6fd8 100%);
+    border: none; border-radius: var(--radius);
+    color: #fff; font-family: 'DM Sans', sans-serif;
+    font-size: 1rem; font-weight: 600; letter-spacing: .03em;
+    cursor: pointer;
+    transition: opacity .2s, transform .1s, box-shadow .2s;
+    box-shadow: 0 4px 20px rgba(79,142,247,0.35);
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .btn-generate:hover { opacity: .92; box-shadow: 0 6px 28px rgba(79,142,247,0.48); }
+  .btn-generate:active { transform: scale(.99); }
+  .btn-generate:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-generate .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    display: none;
+  }
+  .btn-generate.loading .spinner { display: block; }
+  .btn-generate.loading .btn-text { display: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+ 
+  #output { margin-top: 32px; display: none; }
+  #output.visible { display: block; animation: fadeSlide .4s ease; }
+  @keyframes fadeSlide { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+
+  .output-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .output-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem; color: var(--text);
+  }
+  .output-header .dest-badge {
+    background: rgba(79,142,247,0.15);
+    border: 1px solid rgba(79,142,247,0.35);
+    border-radius: 50px; padding: 5px 14px;
+    font-size: .8rem; color: var(--accent);
+    font-weight: 600;
+  }
+
+
+  .budget-strip {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    margin-bottom: 22px;
+  }
+  .bcard {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .bcard .bl { font-size: .7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .1em; }
+  .bcard .bv { font-size: 1.1rem; font-weight: 600; color: var(--text); }
+  .bcard .bv.accent { color: var(--accent); }
+  @media (max-width: 600px) { .budget-strip { grid-template-columns: 1fr 1fr; } }
+
+
+  .day-cards { display: flex; flex-direction: column; gap: 16px; }
+  .day-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden;
+  }
+  .day-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer; user-select: none;
+  }
+  .day-num {
+    background: var(--accent); color: #fff;
+    font-size: .78rem; font-weight: 700; letter-spacing: .08em;
+    border-radius: 6px; padding: 4px 10px;
+    white-space: nowrap;
+  }
+  .day-title { font-weight: 500; font-size: .97rem; flex: 1; }
+  .day-chevron { color: var(--text-muted); transition: transform .25s; font-size: 1rem; }
+  .day-card.open .day-chevron { transform: rotate(180deg); }
+  .day-body { padding: 18px 20px; display: none; }
+  .day-card.open .day-body { display: block; }
+
+  .activity { display: flex; gap: 14px; padding: 10px 0; }
+  .activity + .activity { border-top: 1px solid var(--border); }
+  .act-time { font-size: .78rem; color: var(--accent); font-weight: 600; min-width: 52px; padding-top: 2px; }
+  .act-content {}
+  .act-title { font-weight: 500; font-size: .92rem; margin-bottom: 3px; }
+  .act-desc { font-size: .82rem; color: var(--text-muted); line-height: 1.55; }
+  .act-cost { display: inline-block; margin-top: 5px; font-size: .75rem; color: #5fcf8a; background: rgba(95,207,138,0.1); border-radius: 4px; padding: 2px 8px; }
+
+
+  .tips-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px; }
+  @media (max-width: 600px) { .tips-grid { grid-template-columns: 1fr; } }
+  .tip-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+  }
+  .tip-card h4 { font-size: .8rem; color: var(--accent); margin-bottom: 6px; font-weight: 600; }
+  .tip-card p { font-size: .82rem; color: var(--text-muted); line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">✈ TravelGenie <span>AI</span></div>
+  <p class="tagline">Your intelligent travel companion — no account needed</p>
+</header>
+
+<div class="container">
+  <div class="card">
+    <div class="section-label">Trip Details</div>
+
+    <div class="grid-2">
+      <div class="field">
+        <label>Destination</label>
+        <input type="text" id="dest" placeholder="e.g. Tokyo, Paris, Bali…" />
+      </div>
+      <div class="field">
+        <label>Duration</label>
+        <select id="dur">
+          <option>3 days – Weekend</option>
+          <option selected>7 days – Full week</option>
+          <option>10 days</option>
+          <option>14 days – Two weeks</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="field">
+        <label>Total Budget (INR)</label>
+        <input type="number" id="budget" placeholder="e.g. 5000" value="5000" min="100" />
+      </div>
+      <div class="field">
+        <label>Travel Style</label>
+        <select id="style">
+          <option>🎒 Budget Backpacker</option>
+          <option selected>✈️ Mid-Range Comfort</option>
+          <option>💎 Luxury</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="field">
+        <label>Number of Travelers</label>
+        <select id="travelers">
+          <option>1 person</option>
+          <option selected>2 people</option>
+          <option>3 people</option>
+          <option>4 people</option>
+          <option>5+ people</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Accommodation Type</label>
+        <select id="accom">
+          <option>🏨 Hotel</option>
+          <option>🏠 Airbnb / Apartment</option>
+          <option>🛏 Hostel</option>
+          <option>🏝 Resort</option>
+          <option>⛺ Camping / Glamping</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:8px">Your Interests</div>
+    <div class="interests-grid" id="interests">
+      <span class="interest-tag active" data-v="Culture & History">🏛 Culture &amp; History</span>
+      <span class="interest-tag" data-v="Food & Cuisine">🍜 Food &amp; Cuisine</span>
+      <span class="interest-tag" data-v="Nature & Outdoors">🌿 Nature &amp; Outdoors</span>
+      <span class="interest-tag" data-v="Adventure & Sports">🏄 Adventure &amp; Sports</span>
+      <span class="interest-tag" data-v="Art & Museums">🎨 Art &amp; Museums</span>
+      <span class="interest-tag" data-v="Nightlife & Music">🌙 Nightlife &amp; Music</span>
+      <span class="interest-tag" data-v="Shopping & Markets">🛍 Shopping &amp; Markets</span>
+      <span class="interest-tag" data-v="Wellness & Spa">🧘 Wellness &amp; Spa</span>
+      <span class="interest-tag" data-v="Family-Friendly">👨‍👩‍👧 Family-Friendly</span>
+      <span class="interest-tag" data-v="Photography">📷 Photography</span>
+      <span class="interest-tag" data-v="Beaches">🏖 Beaches</span>
+      <span class="interest-tag" data-v="Architecture">🏗 Architecture</span>
+    </div>
+
+    <div class="section-label" style="margin-top:4px">Additional Info</div>
+    <div class="field" style="margin-bottom:0">
+      <textarea id="extra" placeholder="Any dietary requirements, mobility needs, special occasions, must-see places…"></textarea>
+    </div>
+
+    <button class="btn-generate" id="genBtn" onclick="generate()">
+      <div class="spinner"></div>
+      <span class="btn-text">✈ Generate My Travel Plan</span>
+    </button>
+  </div>
+
+
+  <div id="output">
+    <div class="card">
+      <div class="output-header">
+        <h2 id="outTitle">Your Personalised Itinerary</h2>
+        <span class="dest-badge" id="destBadge"></span>
+      </div>
+
+      <div class="budget-strip" id="budgetStrip"></div>
+
+      <div class="section-label">Day-by-Day Plan</div>
+      <div class="day-cards" id="dayCards"></div>
+
+      <div class="section-label" style="margin-top:28px">Practical Tips</div>
+      <div class="tips-grid" id="tipsGrid"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+document.querySelectorAll('.interest-tag').forEach(t => {
+  t.addEventListener('click', () => t.classList.toggle('active'));
+});
+
+
+const DB = {
+  tokyo: {
+    name: "Tokyo, Japan",
+    currency: "JPY (¥)",
+    bestTime: "Mar–May, Sep–Nov",
+    lang: "Japanese",
+    timezone: "JST (UTC+9)",
+    tip_transport: "Get a Suica card for seamless subway & bus travel. JR Pass is worth it for day trips to Kyoto.",
+    tip_money: "Japan is largely cash-based. Withdraw yen from 7-Eleven ATMs for best rates.",
+    tip_culture: "Remove shoes when entering homes & some restaurants. Bow slightly as greeting. Avoid eating while walking.",
+    tip_connectivity: "Rent a pocket WiFi at Narita/Haneda or buy a data SIM. Coverage is excellent nationwide.",
+    days: {
+      "Culture & History": [
+        { t:"09:00", title:"Senso-ji Temple, Asakusa", desc:"Tokyo's oldest and most iconic Buddhist temple. Arrive early to beat crowds. Walk through Nakamise Shopping Street for souvenirs.", cost:"Free" },
+        { t:"12:00", title:"Lunch at Asakusa Imahan", desc:"Try classic beef sukiyaki or tempura in a traditional wooden townhouse setting.", cost:"~$20–35/person" },
+        { t:"14:00", title:"Edo-Tokyo Museum", desc:"Immersive museum tracing Tokyo's history from Edo period through WWII and modern boom.", cost:"~$6" },
+        { t:"17:30", title:"Ueno Park & Shrines", desc:"Stroll past Ueno Toshogu Shrine and Shinobazu Pond as the light turns golden.", cost:"Free" },
+        { t:"19:30", title:"Dinner in Yanaka", desc:"Explore the preserved old-town neighbourhood with traditional izakayas and craft sake bars.", cost:"~$15–25/person" },
+      ],
+      "Food & Cuisine": [
+        { t:"07:00", title:"Tsukiji Outer Market Breakfast", desc:"Fresh sushi, tamagoyaki, and seafood grilled right in front of you at the famous outer market stalls.", cost:"~$10–18" },
+        { t:"11:00", title:"Ramen Deep Dive, Shinjuku", desc:"Try Ichiran for solo tonkotsu ramen in private booths — a quintessential Tokyo experience.", cost:"~$12" },
+        { t:"14:00", title:"Depachika Food Halls", desc:"Isetan Shinjuku's basement food hall is a temple of Japanese confectionery, bento and deli.", cost:"~$10 tasting" },
+        { t:"18:00", title:"Shibuya Food Tour", desc:"Work through yakitori skewers, takoyaki, and matcha soft-serve in the back alleys of Shibuya.", cost:"~$20–30" },
+      ],
+      "default": [
+        { t:"09:00", title:"Shibuya Crossing & Scramble", desc:"Start at the world's busiest pedestrian crossing. Visit Hachiko statue and explore surrounding streets.", cost:"Free" },
+        { t:"11:30", title:"Harajuku & Takeshita Street", desc:"Colourful street fashion, crepe stalls, and quirky boutiques in Tokyo's youth culture hub.", cost:"Free entry" },
+        { t:"14:00", title:"Meiji Jingu Shrine", desc:"Tranquil forested shrine in the heart of the city, dedicated to Emperor Meiji.", cost:"Free" },
+        { t:"16:30", title:"Shinjuku Gyoen National Garden", desc:"Spacious garden blending French formal, English landscape and Japanese traditional styles.", cost:"~$2.50" },
+        { t:"19:00", title:"Dinner & Drinks, Golden Gai", desc:"200+ tiny bars crammed into six alleyways — each with its own personality. One of Tokyo's great experiences.", cost:"~$15–30" },
+      ],
+    },
+    tips: [
+      { h:"Getting Around", p:"Tokyo's metro is world-class. A Suica IC card covers subway, buses and even some convenience stores. Day passes are great value." },
+      { h:"Best Areas to Stay", p:"Shinjuku for nightlife & transport hub; Shibuya for trendy vibes; Asakusa for traditional atmosphere; Akihabara for electronics & anime." },
+      { h:"Food Essentials", p:"Convenience stores (7-Eleven, Lawson) are surprisingly excellent for quick, cheap, quality meals. Look for seasonal onigiri and hot foods." },
+      { h:"Etiquette", p:"Keep voice low on trains. Don't tip — it can be considered rude. Queue properly; Japanese people are incredibly orderly." },
+    ]
+  },
+  paris: {
+    name: "Paris, France",
+    currency: "EUR (€)",
+    bestTime: "Apr–Jun, Sep–Oct",
+    lang: "French",
+    timezone: "CET (UTC+1)",
+    tip_transport: "Buy a Navigo pass for unlimited metro/bus. Walking between arrondissements is often the best way to discover Paris.",
+    tip_money: "Cards accepted almost everywhere. Notify your bank before travelling. Small cafés may still prefer cash.",
+    tip_culture: "Greet with 'Bonjour' — it matters. Lunch is sacred (12–2pm); dinner rarely before 8pm. Dress smart-casual.",
+    tip_connectivity: "Orange and SFR have good coverage. EU roaming removes extra costs for European visitors.",
+    days: {
+      "Culture & History": [
+        { t:"09:00", title:"The Louvre Museum", desc:"Home to the Mona Lisa and Venus de Milo. Book online to skip queues. Focus on one wing per visit.", cost:"~€17" },
+        { t:"13:00", title:"Lunch at a Marais Café", desc:"The Marais has some of Paris's best falafel (L'As du Fallafel) and artisan bakeries.", cost:"~€12–20" },
+        { t:"15:00", title:"Musée d'Orsay", desc:"Impressionist masterpieces by Monet, Renoir, and Van Gogh in a stunning converted railway station.", cost:"~€16" },
+        { t:"19:00", title:"Seine River Walk", desc:"Stroll along Quai de la Tournelle and Île Saint-Louis as dusk falls over the city.", cost:"Free" },
+        { t:"20:30", title:"Dinner in Saint-Germain", desc:"Classic French bistro — steak frites, onion soup, crème brûlée. Neighbourhood feels like old Paris.", cost:"~€30–50/person" },
+      ],
+      "default": [
+        { t:"08:30", title:"Morning at Montmartre", desc:"Winding cobblestone streets, Sacré-Cœur Basilica, and artists' square at Place du Tertre.", cost:"Free" },
+        { t:"12:00", title:"Lunch at a Brasserie", desc:"Classic steak tartare or croque monsieur with a carafe of house wine.", cost:"~€15–25" },
+        { t:"14:00", title:"Eiffel Tower", desc:"Walk the first two floors for the best views, or book the summit in advance.", cost:"~€18–30" },
+        { t:"17:00", title:"Champs-Élysées & Arc de Triomphe", desc:"Iconic boulevard leading to the triumphal arch. Climb for panoramic city views.", cost:"~€13" },
+        { t:"20:00", title:"Dinner, Le Marais", desc:"One of Paris's most vibrant quarters with everything from traditional bistros to modern fusion.", cost:"~€25–45" },
+      ],
+    },
+    tips: [
+      { h:"Getting Around", p:"The metro is fast and extensive. A Navigo Liberté+ card offers flexibility. Velib' bike sharing is perfect for daytime exploration." },
+      { h:"Best Areas to Stay", p:"Le Marais for central cool; Saint-Germain for literary charm; Montmartre for bohemian atmosphere; 1st/2nd for proximity to major sights." },
+      { h:"Dining Tips", p:"'Menu du déjeuner' (lunch set menu) at restaurants gives 3 courses for €15–25 — far better value than dinner ordering à la carte." },
+      { h:"Museum Pass", p:"The Paris Museum Pass (€52/4 days) covers 50+ attractions including Louvre, Orsay and Versailles with priority entry." },
+    ]
+  },
+  bali: {
+    name: "Bali, Indonesia",
+    currency: "IDR (Rp)",
+    bestTime: "Apr–Oct (dry season)",
+    lang: "Balinese / Indonesian",
+    timezone: "WITA (UTC+8)",
+    tip_transport: "Rent a scooter ($5–8/day) for flexibility or hire a private driver ($35–50/day) for comfort. Grab app works in major areas.",
+    tip_money: "Withdraw IDR from ATMs in Kuta/Seminyak. US dollars sometimes accepted at tourist spots. Avoid airport exchange.",
+    tip_culture: "Dress modestly at temples (sarong & sash required — often provided). Respect ceremony processions. Don't touch offerings.",
+    tip_connectivity: "Buy a local SIM (Telkomsel or XL) at the airport for cheap high-speed data.",
+    days: {
+      "Nature & Outdoors": [
+        { t:"04:00", title:"Mount Batur Sunrise Trek", desc:"Guided 2-hour hike to the volcano summit for a breathtaking sunrise above the clouds and crater lake.", cost:"~$35 guided" },
+        { t:"09:00", title:"Tegallalang Rice Terraces", desc:"Iconic UNESCO-listed rice paddies in Ubud. Morning light is magical. Skip the overpriced swings.", cost:"~$2 entry" },
+        { t:"13:00", title:"Lunch in Ubud", desc:"Warung Babi Guling for suckling pig or try a vegan bowl at one of Ubud's many health cafés.", cost:"~$5–12" },
+        { t:"15:00", title:"Sacred Monkey Forest Sanctuary", desc:"50-acre nature reserve home to over 700 Balinese long-tailed macaques.", cost:"~$5" },
+        { t:"18:00", title:"Tanah Lot Sunset", desc:"Watch the sun set behind the iconic sea temple perched on a rock — one of Bali's most dramatic views.", cost:"~$3" },
+      ],
+      "default": [
+        { t:"09:00", title:"Uluwatu Temple", desc:"Clifftop sea temple with sweeping Indian Ocean views and wild macaques. Stay for the Kecak fire dance at sunset.", cost:"~$3" },
+        { t:"12:00", title:"Jimbaran Bay Lunch", desc:"Fresh grilled seafood right on the beach — pick your own fish from the display.", cost:"~$15–25" },
+        { t:"15:00", title:"Seminyak Beach & Sunset", desc:"Bali's most stylish beach strip. Find a sunbed, watch surfers, then grab a Bintang as the sky turns orange.", cost:"Free" },
+        { t:"19:00", title:"Dinner in Seminyak", desc:"La Plancha for colourful bean bags on the beach, or Sardine for stunning rice paddy views.", cost:"~$15–35" },
+      ],
+    },
+    tips: [
+      { h:"Getting Around", p:"Scooter rental gives full freedom ($5–8/day). Grab app is reliable for taxis in urban areas. GoJek also works well." },
+      { h:"Best Areas to Stay", p:"Seminyak for beach & nightlife; Ubud for culture & nature; Canggu for surf & digital nomad scene; Nusa Dua for luxury resorts." },
+      { h:"Health & Safety", p:"Don't drink tap water. Avoid ice from unknown sources. Wear reef-safe sunscreen. Stay hydrated in the heat." },
+      { h:"Temple Etiquette", p:"Always wear a sarong (usually provided). Women during menstruation are asked not to enter. Walk clockwise around shrines." },
+    ]
+  },
+  "new york": {
+    name: "New York City, USA",
+    currency: "USD ($)",
+    bestTime: "Apr–Jun, Sep–Nov",
+    lang: "English",
+    timezone: "EST (UTC-5)",
+    tip_transport: "Get an OMNY card or use contactless on the subway. Cabs/rideshares for late nights. Walk when under 20 blocks.",
+    tip_money: "Tipping is expected: 18–22% at restaurants, $1–2/drink at bars, $2–5 for porters.",
+    tip_culture: "Walk fast, move to the right on escalators. Bagels and pizza are sacred — get the real versions, not tourist spots.",
+    tip_connectivity: "T-Mobile and AT&T have excellent NYC coverage. Free WiFi in parks, libraries and subway stations.",
+    days: {
+      "Art & Museums": [
+        { t:"09:00", title:"Metropolitan Museum of Art", desc:"The Met's 2 million+ objects span 5,000 years. Suggested donation: pay what you like. Don't miss Egyptian Art and European Paintings.", cost:"~$30 suggested" },
+        { t:"14:00", title:"Museum Mile, Upper East Side", desc:"Guggenheim's spiral architecture and collection are unmissable. Neue Galerie for Klimt fans.", cost:"~$25" },
+        { t:"17:00", title:"Chelsea Galleries", desc:"The greatest concentration of contemporary art galleries in the world, free to browse.", cost:"Free" },
+        { t:"19:30", title:"Dinner, West Village", desc:"Intimate neighbourhood with some of NYC's best restaurants. Try Via Carota for pasta or The Spotted Pig for gastropub.", cost:"~$35–60" },
+      ],
+      "default": [
+        { t:"08:00", title:"Brooklyn Bridge Walk", desc:"Walk from Brooklyn side for the iconic Manhattan skyline views. Takes about 30 minutes across.", cost:"Free" },
+        { t:"10:00", title:"DUMBO & Brooklyn Heights", desc:"Cobblestone streets, independent bookshops, and the famous Manhattan bridge framing.", cost:"Free" },
+        { t:"13:00", title:"Lunch, Smorgasburg Market", desc:"NYC's famous open-air food market with 80+ local vendors (weekends only). Try the Ramen Burger.", cost:"~$15–25" },
+        { t:"15:00", title:"Central Park", desc:"Explore Bethesda Terrace, Strawberry Fields, the Reservoir, or simply wander.", cost:"Free" },
+        { t:"18:00", title:"Top of the Rock, Rockefeller Center", desc:"Best view in NYC — see both Midtown AND the Empire State Building from above.", cost:"~$40" },
+        { t:"20:00", title:"Dinner in Hell's Kitchen", desc:"NYC's most underrated food neighbourhood — authentic Thai, Colombian, Ethiopian and more.", cost:"~$25–45" },
+      ],
+    },
+    tips: [
+      { h:"Getting Around", p:"Subway runs 24/7 — learn the local vs express distinction. Citi Bike is great for daytime exploration. Avoid taxis during rush hour." },
+      { h:"Best Areas to Stay", p:"Midtown for convenience & sights; Lower East Side for cool/cheap; West Village for charm; Williamsburg for hipster Brooklyn vibes." },
+      { h:"Eating Well for Less", p:"Halal carts, pizza slices ($3–4), and Chinatown dim sum give excellent value. Lunch specials at nice restaurants save 40%." },
+      { h:"Free NYC", p:"Free: Central Park, Brooklyn Bridge, High Line, Staten Island Ferry (views of Statue of Liberty!), many museum 'pay-what-you-wish' hours." },
+    ]
+  },
+};
+
+function getDestData(dest) {
+  const key = dest.toLowerCase().trim().replace(/,.*$/, '');
+  for (const k of Object.keys(DB)) {
+    if (key.includes(k) || k.includes(key)) return { key: k, ...DB[k] };
+  }
+  return null;
+}
+
+function getDays() {
+  const v = document.getElementById('dur').value;
+  if (v.includes('3')) return 3;
+  if (v.includes('10')) return 10;
+  if (v.includes('14')) return 14;
+  return 7;
+}
+
+function getBudgetBreakdown(total, travelers, days) {
+  const perPerson = total / travelers;
+  const perDay = total / days;
+  const accom = Math.round(total * 0.35);
+  const food = Math.round(total * 0.25);
+  const transport = Math.round(total * 0.15);
+  const activities = Math.round(total * 0.15);
+  const misc = total - accom - food - transport - activities;
+  return { perPerson, perDay, accom, food, transport, activities, misc };
+}
+
+function getActiveInterests() {
+  return [...document.querySelectorAll('.interest-tag.active')].map(t => t.dataset.v);
+}
+
+function buildGenericDays(dest, dayCount, interests, style, accom, travelers) {
+  const days = [];
+  const themes = [
+    "Arrival & First Impressions",
+    "City Highlights",
+    "Culture & Heritage",
+    "Local Neighbourhood Exploration",
+    "Day Trip / Nature Escape",
+    "Markets, Food & Hidden Gems",
+    "Leisure & Last Adventures",
+    "Scenic Wonders",
+    "Off-the-Beaten-Path",
+    "Relaxation & Departure Prep",
+  ];
+  const actPool = [
+    { t:"09:00", title:"Morning City Walk", desc:"Explore the heart of the destination on foot — the best way to absorb the local rhythm, architecture and street life.", cost:"Free" },
+    { t:"11:00", title:"Landmark Visit", desc:`${dest}'s most iconic landmark awaits. Book tickets online to skip queues and arrive early for the best atmosphere.`, cost:"~$10–25" },
+    { t:"13:00", title:"Local Lunch", desc:"Head to a neighbourhood restaurant rather than tourist zones — same quality, half the price. Ask locals for recommendations.", cost:"~$10–20/person" },
+    { t:"15:00", title:"Museum or Gallery", desc:"Explore the city's cultural scene. Most major cities have free national museums — check opening hours in advance.", cost:"Free–$20" },
+    { t:"17:00", title:"Viewpoint at Dusk", desc:"Every city has a magic viewpoint. Seek out the high point — rooftop bar, hill, or tower — as the lights come on.", cost:"Free–$15" },
+    { t:"19:30", title:"Dinner Out", desc:`Try the local specialty dish. ${style.includes('Luxury') ? 'Book a top-rated restaurant in advance' : style.includes('Budget') ? 'Street food stalls offer the most authentic flavours' : 'Look for mid-range restaurants favoured by locals'}.`, cost:"~$15–45" },
+  ];
+  for (let d = 1; d <= dayCount; d++) {
+    days.push({ day: d, title: themes[(d - 1) % themes.length], activities: actPool.slice(0, Math.min(5, actPool.length)) });
+  }
+  return days;
+}
+
+function buildDays(data, dayCount, interests, style) {
+  const days = [];
+  const titles = [
+    "Arrival & First Impressions",
+    "Iconic Landmarks",
+    "Culture & Heritage",
+    "Neighbourhood Exploration",
+    "Day Trip & Nature",
+    "Food, Markets & Hidden Gems",
+    "Leisure & Slow Travel",
+    "Hidden Gems & Local Life",
+    "Adventure & Activities",
+    "Relaxation & Departure",
+  ];
+
+
+  const primaryInterest = interests.find(i => data.days[i]) || 'default';
+  const baseActs = data.days[primaryInterest] || data.days['default'];
+
+  for (let d = 1; d <= dayCount; d++) {
+    days.push({
+      day: d,
+      title: titles[(d - 1) % titles.length],
+      activities: baseActs.map((a, i) => ({
+        ...a,
+        title: d > 1 && i === 0 ? `Day ${d} Morning — ${a.title}` : a.title,
+      }))
+    });
+  }
+  return days;
+}
+
+function generate() {
+  const destRaw = document.getElementById('dest').value.trim();
+  if (!destRaw) { alert('Please enter a destination!'); return; }
+
+  const budget = parseFloat(document.getElementById('budget').value) || 1500;
+  const travelers = parseInt(document.getElementById('travelers').value) || 2;
+  const style = document.getElementById('style').value;
+  const accom = document.getElementById('accom').value;
+  const dayCount = getDays();
+  const interests = getActiveInterests();
+
+  const btn = document.getElementById('genBtn');
+  btn.classList.add('loading'); btn.disabled = true;
+
+  setTimeout(() => {
+    btn.classList.remove('loading'); btn.disabled = false;
+
+    const data = getDestData(destRaw);
+    const days = data
+      ? buildDays(data, dayCount, interests, style)
+      : buildGenericDays(destRaw, dayCount, interests, style, accom, travelers);
+
+    const bb = getBudgetBreakdown(budget, travelers, dayCount);
+
+
+    document.getElementById('destBadge').textContent = data ? data.name : destRaw;
+    document.getElementById('outTitle').textContent = `Your ${dayCount}-Day Itinerary`;
+
+
+    document.getElementById('budgetStrip').innerHTML = `
+      <div class="bcard"><div class="bl">Total Budget</div><div class="bv accent">$${budget.toLocaleString()}</div></div>
+      <div class="bcard"><div class="bl">Per Person</div><div class="bv">$${Math.round(bb.perPerson).toLocaleString()}</div></div>
+      <div class="bcard"><div class="bl">Per Day</div><div class="bv">$${Math.round(bb.perDay).toLocaleString()}</div></div>
+      <div class="bcard"><div class="bl">Accommodation</div><div class="bv">$${bb.accom.toLocaleString()}</div></div>
+    `;
+
+
+    const dc = document.getElementById('dayCards');
+    dc.innerHTML = days.map((day, idx) => `
+      <div class="day-card ${idx === 0 ? 'open' : ''}">
+        <div class="day-header" onclick="toggleDay(this.parentElement)">
+          <span class="day-num">DAY ${day.day}</span>
+          <span class="day-title">${day.title}</span>
+          <span class="day-chevron">▾</span>
+        </div>
+        <div class="day-body">
+          ${day.activities.map(a => `
+            <div class="activity">
+              <div class="act-time">${a.t}</div>
+              <div class="act-content">
+                <div class="act-title">${a.title}</div>
+                <div class="act-desc">${a.desc}</div>
+                <span class="act-cost">💰 ${a.cost}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
+
+  
+    const tips = data ? data.tips : [
+      { h:"Getting Around", p:`Research local transport options before arrival. Apps like Google Maps and Citymapper usually cover ${destRaw} well.` },
+      { h:"Money & Payments", p:"Notify your bank before departure. Use a fee-free travel card (Wise, Revolut) to avoid foreign transaction fees." },
+      { h:"Stay Safe", p:"Keep digital copies of your passport and travel insurance. Register with your country's foreign travel advisory if travelling long-term." },
+      { h:"Local SIM", p:"Buying a local SIM on arrival is usually the cheapest way to get reliable mobile data. Check coverage maps beforehand." },
+    ];
+
+    document.getElementById('tipsGrid').innerHTML = tips.map(t => `
+      <div class="tip-card"><h4>📌 ${t.h}</h4><p>${t.p}</p></div>
+    `).join('');
+
+
+    const out = document.getElementById('output');
+    out.classList.remove('visible');
+    void out.offsetWidth;
+    out.style.display = 'block';
+    requestAnimationFrame(() => out.classList.add('visible'));
+    setTimeout(() => out.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+  }, 1400);
+}
+
+function toggleDay(card) {
+  card.classList.toggle('open');
+}
+</script>
+</body>
+</html>
